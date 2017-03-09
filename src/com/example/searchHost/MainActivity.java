@@ -1,9 +1,8 @@
-package com.example.searchtest1;
+package com.example.searchHost;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -91,7 +90,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private List<DeviceSearcher.DeviceBean> mDeviceList = new ArrayList<DeviceSearcher.DeviceBean>();
 	private DeviceAdapter mDeviceAdapter;
 	private void searchDevices_broadcast() {
-		new DeviceSearcher() {
+		new DeviceSearcher(null) {
 			@Override
 			public void onSearchStart() {
 				startSearch(); // 主要用于在UI上展示正在搜索

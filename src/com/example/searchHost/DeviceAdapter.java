@@ -1,4 +1,4 @@
-package com.example.searchtest1;
+package com.example.searchHost;
 
 
 import java.util.ArrayList;
