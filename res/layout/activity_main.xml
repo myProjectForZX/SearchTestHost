@@ -6,18 +6,28 @@
 
     <Button
         android:id="@+id/bt_search"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:text="开始搜索" />
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:text="@string/begin_to_search" />
 
+    <EditText
+        android:id="@+id/passwordEdit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:ems="10"
+        android:layout_above="@+id/bt_search"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="11dp"/>
+    
 	<ListView 
 	    android:id="@+id/lv_device_list"
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:layout_marginTop="50dp"
+	    android:visibility="gone"
 	    ></ListView>
 
 </RelativeLayout>

@@ -4,5 +4,9 @@
     <string name="app_name">SearchTestHost</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    
+    <string name="begin_to_search">开始搜索</string>
+    <string name="please_entry_password">请输入密码</string>
+    <string name="password_is_wrong">密码不正确，请重新输入</string>
 
 </resources>
