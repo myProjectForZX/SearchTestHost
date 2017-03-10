@@ -9,4 +9,6 @@
     <string name="please_entry_password">请输入密码</string>
     <string name="password_is_wrong">密码不正确，请重新输入</string>
 
+    <string name="connect_right">已建立连接</string>
+    <string name="connect_bad">建立连接失败， 请检查网络或者密码是否正确</string>
 </resources>

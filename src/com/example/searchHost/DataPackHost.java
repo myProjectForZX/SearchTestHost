@@ -12,7 +12,7 @@ import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.util.Log;
 
-public class DataPack {
+public class DataPackHost {
 	private static final String TAG = "DataPack";
 	public static final byte DATA_HEAD = 0x51;
 	
@@ -38,9 +38,15 @@ public class DataPack {
     public static final byte PACKET_DATA_TYPE_DEVICE_ETIP = 0x25;
     public static final byte PACKET_DATA_TYPE_DEVICE_AUDI = 0x26;
     public static final byte PACKET_DATA_TYPE_DEVICE_CONT = 0x27;
+    public static final byte PACKET_DATA_TYPE_DEVICE_ALL = 0x28;
     
     public static final String PACKET_CHK_RESULT_OK = "OK";
     public static final String PACKET_CHK_RESULT_BAD = "BAD";
+    
+    //在链接建立的过程中
+    public static final int DEVICE_FIND = 0;
+    public static final int DEVICE_CONNECTED = 1;
+    public static final int DEVICE_NOT_CONNECTED = 2;
     
 	/**
      * 打包响应报文
@@ -145,7 +151,7 @@ public class DataPack {
 				Log.e(TAG, "---------------------> resultString : " + resultString);
 				switch (dataType) {
 				case PACKET_DATA_TYPE_DEVICE_RESULT:
-					if(DataPack.PACKET_CHK_RESULT_OK.equals(resultString)) {
+					if(DataPackHost.PACKET_CHK_RESULT_OK.equals(resultString)) {
 						result = true;
 					} else {
 						result = false;
@@ -208,8 +214,8 @@ public class DataPack {
     }
     
     //用于tcp数据包解析
-    public static boolean parseServiceSocktPackagt(InputStream inputStream, Handler handler) {
-    	return parsePack(input2byte(inputStream), 0, PACKET_TYPE_SEND_RECV_DATA, handler);
+    public static boolean parseServiceSocktPackagt(byte[] data, Handler handler) {
+    	return parsePack(data, 0, PACKET_TYPE_SEND_RECV_DATA, handler);
     }
 
 	private static final byte[] input2byte(InputStream inStream) {

@@ -147,6 +147,18 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		public void handleMessage(Message msg) {
 			// TODO Auto-generated method stub
 			super.handleMessage(msg);
+			switch(msg.what) {
+			case DataPackHost.DEVICE_FIND:
+				if(msg.arg1 == DataPackHost.DEVICE_CONNECTED) {
+					Toast.makeText(getApplicationContext(), getResources().getString(R.string.connect_right), Toast.LENGTH_SHORT).show();
+					new HostSendAndRecvDataThread(mHandler, (String)msg.obj).start();
+				} else if (msg.arg1 == DataPackHost.DEVICE_NOT_CONNECTED) {
+					Toast.makeText(getApplicationContext(), getResources().getString(R.string.connect_bad), Toast.LENGTH_SHORT).show();
+				}
+				break;
+			default:
+					break;
+			}
 		}
 	}
 }
