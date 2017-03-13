@@ -3,6 +3,8 @@ package com.example.searchHost;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -151,7 +153,16 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			case DataPackHost.DEVICE_FIND:
 				if(msg.arg1 == DataPackHost.DEVICE_CONNECTED) {
 					Toast.makeText(getApplicationContext(), getResources().getString(R.string.connect_right), Toast.LENGTH_SHORT).show();
-					new HostSendAndRecvDataThread(mHandler, (String)msg.obj).start();
+					final String deviceIp = (String)msg.obj;
+					
+					new Timer().schedule(new TimerTask() {
+						
+						@Override
+						public void run() {
+							// TODO Auto-generated method stub
+							new HostSendAndRecvDataThread(mHandler, deviceIp).start();
+						}
+					}, 5 * 1000);
 				} else if (msg.arg1 == DataPackHost.DEVICE_NOT_CONNECTED) {
 					Toast.makeText(getApplicationContext(), getResources().getString(R.string.connect_bad), Toast.LENGTH_SHORT).show();
 				}

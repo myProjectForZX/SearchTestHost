@@ -52,15 +52,13 @@ public class HostSendAndRecvDataThread extends Thread{
 			if(!socket.isOutputShutdown()) {
 				sendMessage(socket, DataPackHost.PACKET_TYPE_SEND_RECV_DATA, 
 						new byte[]{DataPackHost.PACKET_DATA_TYPE_DEVICE_ALL},
-						new String[]{""});
+						new String[]{"123zcily"});
 			}
 		}
 		
-		while(true) {
-			if(socket.isConnected()) {
-				if(!socket.isInputShutdown()) {
-					receiveData(socket); 
-				}
+		if (socket.isConnected()) {
+			if (!socket.isInputShutdown()) {
+				receiveData(socket);
 			}
 		}
 	}
