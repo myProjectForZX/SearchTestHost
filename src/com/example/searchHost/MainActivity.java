@@ -41,8 +41,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private EditText passwordEdit;
 	private ListView lvDevice;
 	private ArrayList<DeviceBean> deviceList;
-	private MyHander myHander = new MyHander();
+	private MyHandler mHandler = new MyHandler();
+	
+	public static final int SEARCH_START = 100;
+	public static final int SEARCH_END = 101;
 
+	StringBuffer sb = new StringBuffer();
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -54,15 +59,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		lvDevice=(ListView)findViewById(R.id.lv_device_list);
 		lvDevice.setOnItemClickListener(this);
 		bt.setOnClickListener(this);
-		
-		deviceList=new ArrayList<DeviceBean>();
-		
-		if(mDeviceAdapter ==null){
-			mDeviceAdapter=new DeviceAdapter(getApplicationContext(), deviceList);
-		}else{
-			mDeviceAdapter.notifyDataSetChanged();
-		}
-		lvDevice.setAdapter(mDeviceAdapter);
 	}
 	@Override
 	public void onClick(View v) {
@@ -72,46 +68,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			if(passwordEdit.getText().length() == 0) {
 				Toast.makeText(this, getApplicationContext().getResources().getString(R.string.please_entry_password), Toast.LENGTH_SHORT).show();
 			} else {
-				searchDevices_broadcast(myHander, passwordEdit.getText().toString());
+				searchDevices_broadcast(mHandler, passwordEdit.getText().toString());
 			}
 			break;
 		}
 	}
 	
-	StringBuffer sb = new StringBuffer();
-	public static final int SEARCH_START = 0;
-	public static final int SEARCH_END = 1;
-	
-	Handler mHandler = new Handler(){
-		public void handleMessage(android.os.Message msg) {
-			switch (msg.what) {
-			case SEARCH_START:
-				if(bt != null)
-					bt.setEnabled(false);
-				break;
-			case SEARCH_END:
-				for (DeviceSearcher.DeviceBean d : mDeviceList) {
-					String show = d.getIp() + " : " + d.getPort();
-					DeviceBean deviceBeab = new DeviceBean();
-					deviceBeab.setIp(d.getIp());
-					deviceBeab.setPort(d.getPort());
-					deviceList.add(deviceBeab);
-				}
-				Log.i("TAG", "deviceList="+deviceList.toString());
-				mDeviceAdapter.notifyDataSetChanged();
-				if(bt != null)
-					bt.setEnabled(true);
-				break;
 
-			default:
-				break;
-			}
-		};
-	};
-	
-	
-	private List<DeviceSearcher.DeviceBean> mDeviceList = new ArrayList<DeviceSearcher.DeviceBean>();
-	private DeviceAdapter mDeviceAdapter;
 	
 	private void searchDevices_broadcast(final Handler handler, final String password) {
 		new DeviceSearcher(handler, password) {
@@ -123,11 +86,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			@Override
 			public void onSearchFinish(Set deviceSet) {
 				Log.i("TAG", "onSearchFinish-deviceSet="+deviceSet.size());
-				if(mDeviceList!=null){
-					mDeviceList.clear();
-					mDeviceList.addAll(deviceSet);
-					mHandler.sendEmptyMessage(SEARCH_END); // 在UI上更新设备列表
-				}
 			}
 
 		}.start();
@@ -136,20 +94,24 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private void startSearch() {
 		mHandler.sendEmptyMessage(SEARCH_START);
 	}
-
-	@Override
-	public void onItemClick(AdapterView<?> parent, View view, int position,
-			long id) {
-		
-	}
 	
-	private class MyHander extends Handler {
+	private class MyHandler extends Handler {
 
 		@Override
 		public void handleMessage(Message msg) {
 			// TODO Auto-generated method stub
 			super.handleMessage(msg);
 			switch(msg.what) {
+			case SEARCH_START:
+				if(bt != null)
+					bt.setEnabled(false);
+				break;
+			
+			case SEARCH_END:
+				if(bt != null)
+					bt.setEnabled(true);
+				break;
+				
 			case DataPackHost.DEVICE_FIND:
 				if(msg.arg1 == DataPackHost.DEVICE_CONNECTED) {
 					Toast.makeText(getApplicationContext(), getResources().getString(R.string.connect_right), Toast.LENGTH_SHORT).show();
@@ -160,16 +122,47 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 						@Override
 						public void run() {
 							// TODO Auto-generated method stub
-							new HostSendAndRecvDataThread(mHandler, deviceIp).start();
+							//连接建立之后发送请求全部数据的请求
+							byte[] dataType = new byte[]{DataPackHost.PACKET_DATA_TYPE_DEVICE_ALL};
+							String[] dataContent = new String[]{"empty"};
+							new HostSendDataThread(mHandler, deviceIp, dataType, dataContent).start();
 						}
-					}, 5 * 1000);
+					}, 2 * 1000);
+					
+					new  HostRecvDataThread(mHandler, deviceIp).start();
 				} else if (msg.arg1 == DataPackHost.DEVICE_NOT_CONNECTED) {
 					Toast.makeText(getApplicationContext(), getResources().getString(R.string.connect_bad), Toast.LENGTH_SHORT).show();
+				}
+				break;
+			case DataPackHost.PACKET_TYPE_SEND_RECV_DATA:
+				String mesString  = msg.what + "   " + msg.obj;
+				Toast.makeText(getApplicationContext(), mesString, Toast.LENGTH_LONG).show();
+				switch (msg.arg1) {
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_NAME:
+					break;
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_TIME:
+					break;
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_LANG:
+					break;
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP:
+					break;
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_AUDI:
+					break;
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_CONT:
+					break;
+				default:
+					break;
 				}
 				break;
 			default:
 					break;
 			}
 		}
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		// TODO Auto-generated method stub
+		
 	}
 }

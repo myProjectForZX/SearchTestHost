@@ -10,7 +10,7 @@ import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
-import android.util.Log;
+import android.os.Message;
 
 public class DataPackHost {
 	private static final String TAG = "DataPack";
@@ -86,24 +86,20 @@ public class DataPackHost {
      */
     private static boolean parsePack(byte data[], int dataOffSet, byte needCheckPackType, Handler handler) {
     	boolean result = false;
+    	Log.e(TAG, "-------------------> parsePack begin");
         if (data == null) {
+        	Log.e(TAG, "----------------> parsePack : data = null");
             return result;
         }
-/*        String ip = pack.getAddress().getHostAddress();
-        int port = pack.getPort();
-        for (DeviceBean d : mDeviceSet) {
-            if (d.getIp().equals(ip)) {
-                return false;
-            }
-        }*/
+
         int dataLen = data.length;
         int offset = 0;
         byte packType = 0x00;
         byte dataType;
         int len;
-        /*DeviceBean device = null;*/
  
         if (dataLen < 2) {
+        	Log.e(TAG, "----------------> parsePack : datalen < 2");
             return result;
         }
 
@@ -112,9 +108,11 @@ public class DataPackHost {
         //to check packType is right.
         
         if (data[offset++] != DATA_HEAD || (packType = data[offset++]) != needCheckPackType) {
+        	Log.e(TAG, "----------------> datatyep mismatch");
             return result;
         }
-        	
+        
+        Log.e(TAG, "---------------------->  packType : " + packType);
 		switch (packType) {
 		case PACKET_TYPE_FIND_HOST_REQ:
 			// host
@@ -148,40 +146,41 @@ public class DataPackHost {
 				}
 				
 				String resultString = new String(data, offset, len, Charset.forName("UTF-8"));
-				Log.e(TAG, "---------------------> resultString : " + resultString);
-				switch (dataType) {
-				case PACKET_DATA_TYPE_DEVICE_RESULT:
+				Log.e(TAG, "---------------------> dataType : " + dataType + "   resultString : " + resultString);
+				
+				if(dataType == PACKET_DATA_TYPE_DEVICE_RESULT) {
 					if(DataPackHost.PACKET_CHK_RESULT_OK.equals(resultString)) {
 						result = true;
 					} else {
 						result = false;
 					}
-					break;
-				case PACKET_DATA_TYPE_DEVICE_NAME:
-					/*
-					 * String name = new String(data, offset, len,
-					 * Charset.forName("UTF-8")); device = new DeviceBean();
-					 * device.setName(name); device.setIp(ip);
-					 * device.setPort(port);
-					 */
-					break;
-				case PACKET_DATA_TYPE_DEVICE_TIME:
-					/*
-					 * String room = new String(data, offset, len,
-					 * Charset.forName("UTF-8")); if (device != null) {
-					 * device.setRoom(room); }
-					 */
-				case PACKET_DATA_TYPE_DEVICE_LANG:
-					break;
-				case PACKET_DATA_TYPE_DEVICE_ETIP:
-					break;
-				case PACKET_DATA_TYPE_DEVICE_AUDI:
-					break;
-				case PACKET_DATA_TYPE_DEVICE_CONT:
-					break;
-				default:
-					break;
+				} else {
+					boolean isDefault = false;
+					Message msg = new Message();
+					msg.what = DataPackHost.PACKET_TYPE_SEND_RECV_DATA;
+					msg.arg1 = dataType;
+					msg.obj  = resultString;
+					switch (dataType) {
+					case PACKET_DATA_TYPE_DEVICE_NAME:
+						break;
+					case PACKET_DATA_TYPE_DEVICE_TIME:
+						break;
+					case PACKET_DATA_TYPE_DEVICE_LANG:
+						break;
+					case PACKET_DATA_TYPE_DEVICE_ETIP:
+						break;
+					case PACKET_DATA_TYPE_DEVICE_AUDI:
+						break;
+					case PACKET_DATA_TYPE_DEVICE_CONT:
+						break;
+					default:
+						isDefault = true;
+						break;
+					}
+					if(handler != null && !isDefault)
+						handler.sendMessage(msg);
 				}
+				
 				offset += len;
 			}
 			break;
