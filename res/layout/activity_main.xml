@@ -10,7 +10,8 @@
         android:layout_height="50dp"
         android:layout_centerVertical="true"
         android:layout_alignParentStart="true"
-        android:text="@string/begin_to_search" />
+        android:text="@string/begin_to_search"
+        android:visibility="gone"/>
 
     <EditText
         android:id="@+id/passwordEdit"
@@ -20,14 +21,177 @@
         android:ems="10"
         android:layout_above="@+id/bt_search"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="11dp"/>
-    
-	<ListView 
-	    android:id="@+id/lv_device_list"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:layout_marginTop="50dp"
-	    android:visibility="gone"
-	    ></ListView>
+        android:layout_marginBottom="11dp"
+        android:visibility="gone"/>
+
+    <TextView
+		android:id="@+id/DeviceNameId" 
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_below="@+id/passwordEdit"
+        android:layout_toEndOf="@+id/bt_search"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/device_name"
+        android:textSize="@dimen/device_text_size"/>
+
+    <TextView
+        android:id="@+id/DeviceNameString" 
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_alignTop="@+id/DeviceNameId"
+        android:layout_toEndOf="@+id/DeviceNameId"
+        android:layout_marginStart="24dp"
+        android:textSize="@dimen/device_text_size"/>
+
+    <TextView
+        android:id="@+id/DeviceIP" 
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_below="@+id/DeviceNameId"
+        android:layout_alignStart="@+id/DeviceNameId"
+        android:layout_marginTop="@dimen/device_up_down_distance"
+        android:text="@string/device_add"
+        android:textSize="@dimen/device_text_size"/>
+
+    <TextView
+		android:id="@+id/DeviceTime" 
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_below="@+id/DeviceIP"
+        android:layout_alignStart="@+id/DeviceIP"
+        android:layout_marginTop="@dimen/device_up_down_distance"
+		android:text="@string/device_time"
+		android:textSize="@dimen/device_text_size"/>
+
+    <EditText
+        android:id="@+id/DeviceTimeValue" 
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+        android:inputType="text"
+        android:ems="20"
+        android:layout_alignBottom="@+id/DeviceTime"
+        android:layout_alignStart="@+id/DeviceIPValue"
+        android:layout_alignEnd="@+id/DeviceIPValue"
+        android:layout_marginTop="33dp"/>
+
+    <TextView
+        android:id="@+id/DeviceLanauge"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_below="@+id/DeviceTimeValue"
+        android:layout_alignStart="@+id/DeviceTime"
+        android:layout_marginTop="@dimen/device_up_down_distance"
+        android:text="@string/device_lang"
+        android:textSize="@dimen/device_text_size" />
+
+    <Spinner
+        android:id="@+id/DeviceLangValue" 
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_spinner_height"
+        android:layout_alignBottom="@+id/DeviceLanauge"
+        android:layout_alignStart="@+id/DeviceTimeValue"
+        android:layout_alignTop="@+id/DeviceLanauge" 
+        />
+
+    <TextView
+        android:id="@+id/DeviceAudio"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_below="@+id/DeviceLanauge"
+        android:layout_alignStart="@+id/DeviceLanauge"
+        android:layout_marginTop="@dimen/device_up_down_distance"
+        android:text="@string/device_audi"
+        android:textSize="@dimen/device_text_size" />
+
+    <Button
+        android:id="@+id/DeviceTimeChangeButton" 
+        android:layout_width="@dimen/device_button_width"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_alignBottom="@+id/DeviceTimeValue"
+        android:layout_alignStart="@+id/DeviceIPChangeButton"
+        android:text="@string/device_change"/>
+
+    <Button
+        android:id="@+id/DeviceLangButton" 
+        android:layout_width="@dimen/device_button_width"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_alignBottom="@+id/DeviceLangValue"
+        android:layout_alignStart="@+id/DeviceTimeChangeButton"
+        android:text="@string/device_change"/>
+
+    <Button
+		android:id="@+id/DeviceAudioChangeButton"
+        android:layout_width="@dimen/device_button_width"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_alignBottom="@+id/DeviceAudioVaule"
+        android:layout_alignStart="@+id/DeviceLangButton"
+        android:text="@string/device_change"/>
+
+    <EditText
+        android:id="@+id/DeviceIPValue"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/device_widget_height"
+        android:layout_above="@+id/DeviceTime"
+        android:layout_alignStart="@+id/DeviceNameString"
+        android:layout_toLeftOf="@+id/DeviceIPChangeButton"
+        android:ems="15"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/DeviceAudioVaule"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+        android:layout_alignBottom="@+id/DeviceAudio"
+        android:layout_marginStart="20dp"
+        android:layout_toRightOf="@+id/DeviceAudioType"
+        android:layout_toLeftOf="@+id/DeviceAudioChangeButton"
+        android:ems="10"
+        android:inputType="text" />
+
+    <Spinner
+        android:id="@+id/DeviceAudioType"
+        android:layout_width="@dimen/device_spinner_width"
+        android:layout_height="@dimen/device_spinner_height"
+        android:layout_alignBottom="@+id/DeviceAudio"
+        android:layout_alignStart="@+id/DeviceLangValue"
+        android:layout_alignTop="@+id/DeviceAudio" />
+
+    <Button
+        android:id="@+id/DeviceIPChangeButton"
+        android:layout_width="@dimen/device_button_width"
+        android:layout_height="@dimen/device_widget_height"
+		android:gravity="center"
+        android:layout_alignParentRight="true"
+        android:layout_alignBottom="@+id/DeviceIPValue"
+        android:layout_marginStart="@dimen/device_left_right_width"
+        android:text="@string/device_change" />
+
+    <Button
+        android:id="@+id/button_quit"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+        android:layout_alignLeft="@+id/DeviceAudioVaule"
+        android:layout_alignTop="@+id/DeviceContact"
+        android:text="@string/device_quit" />
+
+    <Button
+        android:id="@+id/DeviceContact"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/device_widget_height"
+        android:layout_below="@+id/DeviceAudio"
+        android:layout_marginTop="37dp"
+        android:layout_toLeftOf="@+id/DeviceAudioType"
+        android:gravity="center"
+        android:text="@string/device_contact" />
 
 </RelativeLayout>

@@ -11,4 +11,15 @@
 
     <string name="connect_right">已建立连接</string>
     <string name="connect_bad">建立连接失败， 请检查网络或者密码是否正确</string>
+    
+    <string name="device_name">设备名称 :</string>
+    <string name="device_lang">设备语言 :</string>
+    <string name="device_time">设备时间 :</string>
+    <string name="device_add">设备地址 :</string>
+    <string name="device_audi">设备音量 :</string>
+    <string name="device_contact">联系人</string>
+    
+    
+    <string name="device_change">修改</string>
+    <string name="device_quit">退出</string>
 </resources>

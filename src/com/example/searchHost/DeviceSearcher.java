@@ -57,48 +57,51 @@ public abstract class DeviceSearcher extends Thread {
             // 监听来信
             byte[] receData = new byte[4096];
             DatagramPacket recePack = new DatagramPacket(receData, receData.length);
-			try {
-				recePack.setData(receData);
-				hostSocket.receive(recePack);
-				Log.e(TAG, "-------------------> rece send data");
-				if (recePack.getLength() > 0) {
-					mDeviceIP = recePack.getAddress().getHostAddress();
-					Log.e(TAG, "-------------------> rece send data device ip : " + mDeviceIP);
-					if (DataPackHost.parseDatagramPacket(recePack, DataPackHost.PACKET_TYPE_FIND_DEVICE_RSP, mHandler)) {
-						Log.i(TAG, "the device ip : " + mDeviceIP);
-						// 发送一对一的确认信息。使用接收报，因为接收报中有对方的实际IP，发送报时广播IP
+
+			recePack.setData(receData);
+			hostSocket.receive(recePack);
+			Log.e(TAG, "-------------------> rece send data");
+			if (recePack.getLength() > 0) {
+				mDeviceIP = recePack.getAddress().getHostAddress();
+				Log.e(TAG, "-------------------> rece send data device ip : " + mDeviceIP);
+				if (DataPackHost.parseDatagramPacket(recePack, DataPackHost.PACKET_TYPE_FIND_DEVICE_RSP, mHandler)) {
+					Log.i(TAG, "the device ip : " + mDeviceIP);
+					// 发送一对一的确认信息。使用接收报，因为接收报中有对方的实际IP，发送报时广播IP
 						
-						byte[] sendHostCHKPassword = new byte[] {DataPackHost.PACKET_DATA_TYPE_DEVICE_PASS};
-						String[] password = new String[]{mPassword};
-						recePack.setData(DataPackHost.packData(DataPackHost.PACKET_TYPE_FIND_HOST_CHK, sendHostCHKPassword, password)); // 注意：设置数据的同时，把recePack.getLength()也改变了
-						hostSocket.send(recePack);
+					byte[] sendHostCHKPassword = new byte[] {DataPackHost.PACKET_DATA_TYPE_DEVICE_PASS};
+					String[] password = new String[]{mPassword};
+					recePack.setData(DataPackHost.packData(DataPackHost.PACKET_TYPE_FIND_HOST_CHK, sendHostCHKPassword, password)); // 注意：设置数据的同时，把recePack.getLength()也改变了
+					hostSocket.send(recePack);
 						
-						Log.e(TAG, "------------------> before receive device chk");
-						hostSocket.receive(recePack);
-						Log.e(TAG, "------------------> after receive device chk");
+					Log.e(TAG, "------------------> before receive device chk");
+					hostSocket.receive(recePack);
+					Log.e(TAG, "------------------> after receive device chk");
 						
-						Message msg = new Message();
-						msg.what = DataPackHost.DEVICE_FIND;
+					Message msg = new Message();
+					msg.what = DataPackHost.DEVICE_FIND;
 						
-						if(DataPackHost.parseDatagramPacket(recePack, DataPackHost.PACKET_TYPE_FIND_DEVICE_CHK, mHandler)) {
-							Log.e(TAG, "------------------> password is right");
-							msg.arg1 = DataPackHost.DEVICE_CONNECTED;
-							msg.obj = (String)mDeviceIP;
-						} else {
-							Log.e(TAG, "------------------> password is bad");
-							msg.arg1 = DataPackHost.DEVICE_NOT_CONNECTED;
-						}
-						if(mHandler != null) {
-							mHandler.sendMessage(msg);
-						}
+					if(DataPackHost.parseDatagramPacket(recePack, DataPackHost.PACKET_TYPE_FIND_DEVICE_CHK, mHandler)) {
+						Log.e(TAG, "------------------> password is right");
+						msg.arg1 = DataPackHost.DEVICE_CONNECTED;
+						msg.obj = (String)mDeviceIP;
+					} else {
+						Log.e(TAG, "------------------> password is bad");
+						msg.arg1 = DataPackHost.DEVICE_NOT_CONNECTED;
+					}
+					if(mHandler != null) {
+						mHandler.sendMessage(msg);
 					}
 				}
-			} catch (SocketTimeoutException e) {
 			}
 			Log.i(TAG, "------------------>: finis search");
 			onSearchFinish(mDeviceSet);
 		} catch (IOException e) {
 			e.printStackTrace();
+			Message msg = new Message();
+			msg.what = 101;//UI_SEARCH_FAILED
+			if(mHandler != null) {
+				mHandler.sendMessage(msg);
+			}
 		} finally {
 			if (hostSocket != null) {
 				hostSocket.close();
