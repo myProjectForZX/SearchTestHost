@@ -160,7 +160,7 @@
 
     <Spinner
         android:id="@+id/DeviceAudioType"
-        android:layout_width="@dimen/device_spinner_width"
+        android:layout_width="wrap_content"
         android:layout_height="@dimen/device_spinner_height"
         android:layout_alignBottom="@+id/DeviceAudio"
         android:layout_alignStart="@+id/DeviceLangValue"

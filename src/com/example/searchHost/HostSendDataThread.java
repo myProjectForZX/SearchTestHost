@@ -1,28 +1,18 @@
 package com.example.searchHost;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import android.R.dimen;
 import android.os.Handler;
-import android.system.OsConstants;
 
 public class HostSendDataThread extends Thread{
+	private final String TAG = "HostSendAndRecvDataThread";
+	
 	private String mDeviceIp;
 	private Handler mHandler;
 	private Socket socket;
-	private final String TAG = "HostSendAndRecvDataThread";
 	private DataOutputStream dataOutputStream;
 	
 	private static final int PORT = 9001;

@@ -13,15 +13,13 @@ import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 /**
- * Éè±¸ËÑË÷Àà
+ * è®¾å¤‡æœç´¢
  */
 public abstract class DeviceSearcher extends Thread {
     private static final String TAG = "DeviceSearcher";
  
     private static final int DEVICE_FIND_PORT = 9000;
-    private static final int RECEIVE_TIME_OUT = 10000; // ½ÓÊÕ³¬Ê±Ê±¼ä
-    private static final int RESPONSE_DEVICE_MAX = 200; // ÏìÓ¦Éè±¸µÄ×î´ó¸öÊı£¬·ÀÖ¹UDP¹ã²¥¹¥»÷
- 
+    private static final int RECEIVE_TIME_OUT = 10000; // æ¥æ”¶è¶…æ—¶æ—¶é—´
  
     private DatagramSocket hostSocket;
     private Set<DeviceBean> mDeviceSet;
@@ -42,7 +40,6 @@ public abstract class DeviceSearcher extends Thread {
         try {
             onSearchStart();
             hostSocket = new DatagramSocket();
-            // ÉèÖÃ½ÓÊÕ³¬Ê±Ê±¼ä
             hostSocket.setSoTimeout(RECEIVE_TIME_OUT);
  
             //send req broadcast.
@@ -54,7 +51,7 @@ public abstract class DeviceSearcher extends Thread {
             hostSocket.send(sendPack);
             //end send req.  wait for rsp
             Log.e(TAG, "-------------------> begin send data");
-            // ¼àÌıÀ´ĞÅ
+            
             byte[] receData = new byte[4096];
             DatagramPacket recePack = new DatagramPacket(receData, receData.length);
 
@@ -66,11 +63,10 @@ public abstract class DeviceSearcher extends Thread {
 				Log.e(TAG, "-------------------> rece send data device ip : " + mDeviceIP);
 				if (DataPackHost.parseDatagramPacket(recePack, DataPackHost.PACKET_TYPE_FIND_DEVICE_RSP, mHandler)) {
 					Log.i(TAG, "the device ip : " + mDeviceIP);
-					// ·¢ËÍÒ»¶ÔÒ»µÄÈ·ÈÏĞÅÏ¢¡£Ê¹ÓÃ½ÓÊÕ±¨£¬ÒòÎª½ÓÊÕ±¨ÖĞÓĞ¶Ô·½µÄÊµ¼ÊIP£¬·¢ËÍ±¨Ê±¹ã²¥IP
 						
 					byte[] sendHostCHKPassword = new byte[] {DataPackHost.PACKET_DATA_TYPE_DEVICE_PASS};
 					String[] password = new String[]{mPassword};
-					recePack.setData(DataPackHost.packData(DataPackHost.PACKET_TYPE_FIND_HOST_CHK, sendHostCHKPassword, password)); // ×¢Òâ£ºÉèÖÃÊı¾İµÄÍ¬Ê±£¬°ÑrecePack.getLength()Ò²¸Ä±äÁË
+					recePack.setData(DataPackHost.packData(DataPackHost.PACKET_TYPE_FIND_HOST_CHK, sendHostCHKPassword, password)); // ×¢ï¿½â£ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İµï¿½Í¬Ê±ï¿½ï¿½ï¿½ï¿½recePack.getLength()Ò²ï¿½Ä±ï¿½ï¿½ï¿½
 					hostSocket.send(recePack);
 						
 					Log.e(TAG, "------------------> before receive device chk");
@@ -111,70 +107,12 @@ public abstract class DeviceSearcher extends Thread {
     }
  
     /**
-     * ËÑË÷¿ªÊ¼Ê±Ö´ĞĞ
+     * å¼€å§‹æœç´¢
      */
     public abstract void onSearchStart();
  
     /**
-     * ËÑË÷½áÊøºóÖ´ĞĞ
-     * @param deviceSet ËÑË÷µ½µÄÉè±¸¼¯ºÏ
+     * æœç´¢åˆ°è®¾å¤‡
      */
     public abstract void onSearchFinish(Set deviceSet);
- 
-   
-    /**
-     * Éè±¸Bean
-     * Ö»ÒªIPÒ»Ñù£¬ÔòÈÏÎªÊÇÍ¬Ò»¸öÉè±¸
-     */
-    public static class DeviceBean{
-        String ip;      // IPµØÖ·
-        int port;       // ¶Ë¿Ú
-        String name;    // Éè±¸Ãû³Æ
-        String room;    // Éè±¸ËùÔÚ·¿¼ä
- 
-        @Override
-        public int hashCode() {
-            return ip.hashCode();
-        }
- 
-        @Override
-        public boolean equals(Object o) {
-            if (o instanceof DeviceBean) {
-                return this.ip.equals(((DeviceBean)o).getIp());
-            }
-            return super.equals(o);
-        }
- 
-        public String getIp() {
-            return ip;
-        }
- 
-        public void setIp(String ip) {
-            this.ip = ip;
-        }
- 
-        public int getPort() {
-            return port;
-        }
- 
-        public void setPort(int port) {
-            this.port = port;
-        }
- 
-        public String getName() {
-            return name;
-        }
- 
-        public void setName(String name) {
-            this.name = name;
-        }
- 
-        public String getRoom() {
-            return room;
-        }
- 
-        public void setRoom(String room) {
-            this.room = room;
-        }
-    }
 }

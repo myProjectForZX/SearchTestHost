@@ -34,7 +34,7 @@ public class HostRecvDataThread extends Thread{
 				String remoteIp = deviceSocket.getInetAddress().getHostAddress();
 				Log.i(TAG, "------------------->  remoteIp : " + remoteIp + "   deviceIp : " + mDeviceIp + "   isEqual : " + remoteIp.equals(mDeviceIp));
 				
-				//·ÇÄ¿µÄµØµÄip²»×ö´¦Àí¡£
+				//ip ä¸ç›¸ç­‰çš„ä¸å¤„ç†
 				if(!remoteIp.equals(mDeviceIp)) {
 					deviceSocket.close();
 					continue;

@@ -1,12 +1,10 @@
 package com.example.searchHost;
 
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import android.support.v7.app.ActionBarActivity;
-import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -14,6 +12,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -55,9 +54,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private Button   mDeviceQuitButton  = null;
 	
 	private String currentLangauge = null;
-	private int    currentAudioType = 0;
+	private String currentAudioType = null;
 	private int    currentAudioValue = 0;
 	private int    maxAudioValue     = 0;
+	
+	private String mDeviceIp = null;
+	
+	private String[] mLangItems = null;
+	private String[] mAudioItems = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,8 +109,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	
 	@Override
 	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.bt_search:
+		
+		if(v.getId() == R.id.bt_search) {
 			Log.i(TAG, "click-host-searchDevices_broadcast()");
 			if (passwordEdit.getText().length() == 0) {
 				Toast.makeText(
@@ -118,21 +122,47 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				searchDevices_broadcast(mHandler, passwordEdit.getText()
 						.toString());
 			}
-			break;
-		case R.id.DeviceIPChangeButton:
-			break;
-		case R.id.DeviceTimeChangeButton:
-			break;
-		case R.id.DeviceLangButton:
-			break;
-		case R.id.DeviceAudioChangeButton:
-			break;
-		case R.id.DeviceContact:
-			break;
-		case R.id.button_quit:
-			break;
-		default:
-			break;
+		} else { 
+			if(mDeviceIp == null)
+				return;
+			
+			boolean isDefault = false;
+			byte[] dataType = new byte[1];
+			String[] dataContent = new String[1];
+			switch (v.getId()) {
+			case R.id.DeviceIPChangeButton:
+				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
+				dataContent[0] = mDeviceIpEditText.getText().toString();
+				break;
+			case R.id.DeviceTimeChangeButton:
+				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
+				dataContent[0] = mDeviceTimeEditText.getText().toString();
+				break;
+			case R.id.DeviceLangButton:
+				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
+				dataContent[0] = currentLangauge;
+				break;
+			case R.id.DeviceAudioChangeButton:
+				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
+				dataContent[0] = currentAudioType + ":" + mDeviceAudioEditText.getText().toString();
+				break;
+			case R.id.DeviceContact:
+/*				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_CONT;
+				dataContent[0] = "";*/
+				break;
+			case R.id.button_quit:
+				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT;
+				dataContent[0] = "quit";
+				break;
+			default:
+				isDefault = true;
+				break;
+			}
+			
+			if(!isDefault) {
+				new HostSendDataThread(mHandler, mDeviceIp, dataType, dataContent)
+							.start();
+			}
 		}
 	}
 	
@@ -140,7 +170,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		new DeviceSearcher(handler, password) {
 			@Override
 			public void onSearchStart() {
-				startSearch(); // 主要用于在UI上展示正在搜索
+				startSearch(); 
 			}
 
 			@Override
@@ -172,21 +202,20 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			case DataPackHost.DEVICE_FIND:
 				if(msg.arg1 == DataPackHost.DEVICE_CONNECTED) {
 					Toast.makeText(getApplicationContext(), getResources().getString(R.string.connect_right), Toast.LENGTH_SHORT).show();
-					final String deviceIp = (String)msg.obj;
-					
+					mDeviceIp = (String)msg.obj;
+
 					new Timer().schedule(new TimerTask() {
 						
 						@Override
 						public void run() {
 							// TODO Auto-generated method stub
-							//连接建立之后发送请求全部数据的请求
 							byte[] dataType = new byte[]{DataPackHost.PACKET_DATA_TYPE_DEVICE_ALL};
 							String[] dataContent = new String[]{"empty"};
-							new HostSendDataThread(mHandler, deviceIp, dataType, dataContent).start();
+							new HostSendDataThread(mHandler, mDeviceIp, dataType, dataContent).start();
 						}
 					}, 2 * 1000);
 					
-					new  HostRecvDataThread(mHandler, deviceIp).start();
+					new  HostRecvDataThread(mHandler, mDeviceIp).start();
 					
 					updateUiToConnectStat(UI_SEARCH_SUCC);
 				} else if (msg.arg1 == DataPackHost.DEVICE_NOT_CONNECTED) {
@@ -213,6 +242,22 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 					updateDeviceAudio(result);
 					break;
 				case DataPackHost.PACKET_DATA_TYPE_DEVICE_CONT:
+					break;
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_SETIING_RESULT:
+					int resultId = -1;
+					
+					if(DataPackHost.PACKET_CHK_RESULT_OK.equals(result)) {
+						resultId = R.string.device_change_result_ok;
+					} else if (DataPackHost.PACKET_CHK_RESULT_BAD.equals(result)) {
+						resultId = R.string.device_change_result_fail;
+					} else {
+						resultId = R.string.device_change_result_fail;
+					}
+					String resultMes = getResources().getString(resultId);
+					
+					Toast.makeText(getApplicationContext(), resultMes, Toast.LENGTH_SHORT).show();
+					break;
+				case DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT:
 					break;
 				default:
 					break;
@@ -299,21 +344,36 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private void updateDeviceLang(String lang) {
 		if(lang == null || lang.isEmpty())
 			return;
+		
 		Log.e(TAG, "-----------------> updateDeviceLang : " + lang);
-		String[] langArray = lang.split("\\+");
-		if(langArray != null) {
-			currentLangauge = langArray[0];
-		}
-		String[] mItems = null;
+		
 		ArrayAdapter<String> adapter = null;
-		if(langArray != null && langArray.length >= 2) {
-			mItems = langArray[1].split(":");
+		
+		mLangItems = lang.split(":");
+		if(mLangItems != null) {
+			currentLangauge = mLangItems[0];
 			
-			if(mItems != null)
-			  adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item, mItems);
+			adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item, mLangItems);
 			
-			if(adapter != null)
+			if(adapter != null) {
 				mDeviceLangSpinner.setAdapter(adapter);
+				mDeviceLangSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+					@Override
+					public void onItemSelected(AdapterView<?> arg0, View arg1,
+							int position, long arg3) {
+						// TODO Auto-generated method stub
+						currentLangauge = mLangItems[position];
+					}
+
+					@Override
+					public void onNothingSelected(AdapterView<?> arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+				
+				});
+			}
 		}
 	}
 	
@@ -322,38 +382,47 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			return;
 		Log.e(TAG, "-----------------> updateDeviceAudio : " + audio);
 		String[] audioArrayTemp = audio.split("\\+");
+		ArrayAdapter<String> adapter = null;
 		
 		if(audioArrayTemp != null) {
 			String[] currentAudioArray = audioArrayTemp[0].split(":");
 			if(currentAudioArray != null && currentAudioArray.length == 3) {
-				currentAudioType = Integer.valueOf(currentAudioArray[0]);
+				currentAudioType = currentAudioArray[0];
 				currentAudioValue = Integer.valueOf(currentAudioArray[1]);
 				maxAudioValue     = Integer.valueOf(currentAudioArray[2]);
 			}
 			
-			if(audioArrayTemp.length == 2) {
-				String[] allAudioArray = audioArrayTemp[1].split(":");
-				
-				ArrayAdapter<String> adapter = null;
-				String[] mItems = null;
-				if(allAudioArray != null) {
-					mItems = new String[allAudioArray.length];
+			if(audioArrayTemp.length >= 2) {
+				mAudioItems = new String[audioArrayTemp.length];
 					
-					for(int i = 0; i < allAudioArray.length; ++i) {
-						String[] tempAudio = allAudioArray[i].split("-");
-						
-						if(tempAudio != null && tempAudio.length == 3) {
-							mItems[i] = tempAudio[0];
-						}
+				for(int i = 0; i < audioArrayTemp.length; ++i) {
+					String[] tempAudio = audioArrayTemp[i].split(":");
+					if(tempAudio != null && tempAudio.length == 3) {
+						mAudioItems[i] = tempAudio[0];
 					}
 				}
-				
-				if(mItems != null) {
-					adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item, mItems);
-				}
+			}
+			
+			if(mAudioItems != null) {
+				adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item, mAudioItems);
 				
 				if(adapter != null) {
 					mDeviceAudiSpinner.setAdapter(adapter);
+					mDeviceAudiSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+						@Override
+						public void onItemSelected(AdapterView<?> arg0,
+								View arg1, int pos, long arg3) {
+							// TODO Auto-generated method stub
+							currentAudioType = mAudioItems[pos];
+						}
+
+						@Override
+						public void onNothingSelected(AdapterView<?> arg0) {
+							// TODO Auto-generated method stub
+							
+						}
+					});
 				}
 			}
 		}
