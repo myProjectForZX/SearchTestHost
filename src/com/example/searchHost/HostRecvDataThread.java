@@ -12,9 +12,9 @@ public class HostRecvDataThread extends Thread{
 	private final static String TAG = HostRecvDataThread.class.getSimpleName();
 	private ServerSocket serverSocket;
 	private final int HOST_SERVER_SOCKET_PORT = 9002;
-	private final static int RECEIVE_TIME_OUT = 10 * 60 * 1000;
 	private Handler mHandler;
 	private String  mDeviceIp;
+	private boolean isRunning = true;
 	
 	public HostRecvDataThread(Handler handler, String ip) {
 		mHandler = handler;
@@ -27,8 +27,8 @@ public class HostRecvDataThread extends Thread{
 		super.run();
 		try {
 			serverSocket = new ServerSocket(HOST_SERVER_SOCKET_PORT);
-			while(true) {
-				serverSocket.setSoTimeout(RECEIVE_TIME_OUT);
+			while(isRunning) {
+				serverSocket.setSoTimeout(DataPackHost.RECEIVE_TIME_OUT);
 				Socket deviceSocket = serverSocket.accept();
 				
 				String remoteIp = deviceSocket.getInetAddress().getHostAddress();
@@ -40,7 +40,9 @@ public class HostRecvDataThread extends Thread{
 					continue;
 				}
 					
-				receiveData(deviceSocket);
+				if(true == receiveData(deviceSocket)) {
+					isRunning = false;
+				}
 				
 				deviceSocket.close();
 			}
@@ -48,14 +50,26 @@ public class HostRecvDataThread extends Thread{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			Log.i(TAG, "---------------------> wrong : e " + e);
-			
+		} finally {
+			Log.i(TAG, "---------------------> hostReceive end");
+			try {
+				if(serverSocket != null) {
+					serverSocket.close();
+				}
+				serverSocket = null;
+			} catch (Exception e2) {
+				// TODO: handle exception
+			}
+			if(mHandler!= null) {
+				mHandler.sendEmptyMessage(DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT);
+			}
 		}
 	}
 	
 	
     @SuppressWarnings("resource")
-	public byte[] receiveData(Socket socket) {
-        byte[] data = null;
+	public boolean receiveData(Socket socket) {
+        boolean result = false;
         DataInputStream dIn = null;
         if (socket != null && socket.isConnected()) {
         	if(!socket.isInputShutdown()) {
@@ -68,7 +82,7 @@ public class HostRecvDataThread extends Thread{
 						byte[] message = new byte[length];
 						dIn.readFully(message, 0, message.length);
 						Log.e(TAG, "--------------------> before parse --");
-						DataPackHost.parseServiceSocktPackagt(message, mHandler);
+						result = DataPackHost.parseServiceSocktPackagt(message, mHandler);
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -82,9 +96,7 @@ public class HostRecvDataThread extends Thread{
 					}
 				}
 			}
-        } else {
-            data = new byte[1];
         }
-        return data;
+        return result;
     }
 }

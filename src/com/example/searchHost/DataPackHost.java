@@ -43,6 +43,8 @@ public class DataPackHost {
     public static final int DEVICE_CONNECTED = 1;
     public static final int DEVICE_NOT_CONNECTED = 2;
     
+    public static final int RECEIVE_TIME_OUT = 20 * 60 * 1000;//20分钟
+    
 	/**
      * 数据组成
      * 数据头DATA_HEAD + packType(1) + data(n)
@@ -170,6 +172,7 @@ public class DataPackHost {
 					case PACKET_DATA_TYPE_DEVICE_SETIING_RESULT:
 						break;
 					case PACKET_DATA_TYPE_DEVICE_QUIT:
+						result = true;
 						break;
 					default:
 						isDefault = true;

@@ -263,6 +263,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 					break;
 				}
 				break;
+			case DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT:
+				break;
 			default:
 					break;
 			}
