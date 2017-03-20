@@ -1,5 +1,9 @@
 package com.example.searchHost;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -16,6 +20,8 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,12 +37,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private static final int UI_SEARCH_FAIL  = 101;
 	private static final int UI_SEARCHING  = 102;
 	private static final int UI_SEARCH_SUCC  = 103;
+	private static final int UI_CONTACT_SHOW  = 104;
 	
 	private TextView mDeviceNameId = null;
 	private TextView mDeviceIpId = null;
 	private TextView mDeviceLangId = null;
 	private TextView mDeviceTimeId = null;
 	private TextView mDeviceAudiId = null;
+	private TextView mDeviceContactTitle = null;
 	
 	private TextView mDeviceNameContent = null;
 	private EditText mDeviceIpEditText = null;
@@ -52,6 +60,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private Button   mDeviceAudioButton = null;
 	private Button   mDeviceContactButton = null;
 	private Button   mDeviceQuitButton  = null;
+	private Button   mDeviceContactBackButton = null;
+	private Button   mDeviceContactChangeButton = null;
+	
+	private ScrollView mContactScrollView = null;
 	
 	private String currentLangauge = null;
 	private String currentAudioType = null;
@@ -62,6 +74,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	
 	private String[] mLangItems = null;
 	private String[] mAudioItems = null;
+	
+	private ContactDataAdapter mContactDataAdapter = null;
+	private ContactListView mContactListView = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +95,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		mDeviceTimeId = (TextView)findViewById(R.id.DeviceTime);
 		mDeviceAudiId = (TextView)findViewById(R.id.DeviceAudio);
 		mDeviceNameContent = (TextView)findViewById(R.id.DeviceNameString);
+		mDeviceContactTitle = (TextView)findViewById(R.id.contact_title);
+		mDeviceContactBackButton = (Button) findViewById(R.id.contact_back_button);
+		mDeviceContactChangeButton = (Button) findViewById(R.id.contact_change_button);
 		
 		mDeviceIpEditText = (EditText)findViewById(R.id.DeviceIPValue);
 		mDeviceTimeEditText = (EditText)findViewById(R.id.DeviceTimeValue);
@@ -95,6 +113,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		mDeviceContactButton = (Button)findViewById(R.id.DeviceContact);
 		mDeviceQuitButton  = (Button)findViewById(R.id.button_quit);
 		
+		mContactScrollView = (ScrollView)findViewById(R.id.contact_scrollView);
+		mContactListView = (ContactListView)findViewById(R.id.contact_list);
+		
 		bt_search.setOnClickListener(this);
 		mDeviceIpButton.setOnClickListener(this);
 		mDeviceLangButton.setOnClickListener(this);
@@ -102,14 +123,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		mDeviceAudioButton.setOnClickListener(this);
 		mDeviceContactButton.setOnClickListener(this);
 		mDeviceQuitButton.setOnClickListener(this);
+		mDeviceContactBackButton.setOnClickListener(this);
+		mDeviceContactChangeButton.setOnClickListener(this);
 		
 		updateUiToConnectStat(UI_SEARCH_START);
 	}
 	
-	
 	@Override
 	public void onClick(View v) {
-		
 		if(v.getId() == R.id.bt_search) {
 			Log.i(TAG, "click-host-searchDevices_broadcast()");
 			if (passwordEdit.getText().length() == 0) {
@@ -147,12 +168,20 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				dataContent[0] = currentAudioType + ":" + mDeviceAudioEditText.getText().toString();
 				break;
 			case R.id.DeviceContact:
-/*				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_CONT;
-				dataContent[0] = "";*/
+				updateUiToConnectStat(UI_CONTACT_SHOW);
+				isDefault = true;
 				break;
 			case R.id.button_quit:
 				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT;
 				dataContent[0] = "quit";
+				break;
+			case R.id.contact_back_button:
+				updateUiToConnectStat(UI_SEARCH_SUCC);
+				isDefault = true;
+				break;
+			case R.id.contact_change_button:
+				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_CONT;
+				
 				break;
 			default:
 				isDefault = true;
@@ -166,6 +195,19 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		}
 	}
 	
+	@Override
+	public void onBackPressed() {
+		// TODO Auto-generated method stub
+		
+		byte[] dataType = new byte[] {DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT};
+		String[] dataContent = new String[] {"quit"};
+		
+		new HostSendDataThread(mHandler, mDeviceIp, dataType, dataContent)
+		.start();
+		
+		//super.onBackPressed();
+	}
+
 	private void searchDevices_broadcast(final Handler handler, final String password) {
 		new DeviceSearcher(handler, password) {
 			@Override
@@ -197,6 +239,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				break;
 			case UI_SEARCH_FAIL:
 				updateUiToConnectStat(UI_SEARCH_FAIL);
+				break;
+			case DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT:
+				Log.e(TAG, "----------------> begin to quit");
+				finish();
 				break;
 
 			case DataPackHost.DEVICE_FIND:
@@ -242,6 +288,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 					updateDeviceAudio(result);
 					break;
 				case DataPackHost.PACKET_DATA_TYPE_DEVICE_CONT:
+					updateContactListView(result);
 					break;
 				case DataPackHost.PACKET_DATA_TYPE_DEVICE_SETIING_RESULT:
 					int resultId = -1;
@@ -257,13 +304,9 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 					
 					Toast.makeText(getApplicationContext(), resultMes, Toast.LENGTH_SHORT).show();
 					break;
-				case DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT:
-					break;
 				default:
 					break;
 				}
-				break;
-			case DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT:
 				break;
 			default:
 					break;
@@ -281,12 +324,19 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		if(uiType == UI_SEARCH_START || uiType == UI_SEARCH_FAIL) {
 			showSearchUI(true, true);
 			showDeviceUI(false);
+			showContactUI(false);
 		} else if (uiType == UI_SEARCHING) {
 			showSearchUI(true, false);
 			showDeviceUI(false);
+			showContactUI(false);
 		} else if (uiType == UI_SEARCH_SUCC) {
 			showSearchUI(false, false);
 			showDeviceUI(true);
+			showContactUI(false);
+		} else if (uiType == UI_CONTACT_SHOW) {
+			showSearchUI(false, false);
+			showDeviceUI(false);
+			showContactUI(true);
 		}
 	}
 	
@@ -320,6 +370,16 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		mDeviceAudioButton.setVisibility(visible);
 		mDeviceContactButton.setVisibility(visible);
 		mDeviceQuitButton.setVisibility(visible);
+	}
+	
+	private void showContactUI(boolean show){
+		int visible = (show ? View.VISIBLE : View.GONE);
+		
+		mDeviceContactBackButton.setVisibility(visible);
+		mDeviceContactChangeButton.setVisibility(visible);
+		mDeviceContactTitle.setVisibility(visible);
+		mContactScrollView.setVisibility(visible);
+		mContactListView.setVisibility(visible);
 	}
 	
 	private void updateDeviceName(String deviceName) {
@@ -428,5 +488,39 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				}
 			}
 		}
+	}
+	
+	private List<HashMap<String, String>> getContactListMap(String value){
+		List<HashMap<String, String>> allValueMap = new ArrayList<HashMap<String, String>>();
+		
+		if(value == null || value.isEmpty())
+			return null;
+		
+		String[] contactStrings = value.split("\\+");
+		
+		if(contactStrings != null) {
+			for (String string : contactStrings) {
+				String[] oneContactStrings = string.split(":");
+				if(oneContactStrings == null || oneContactStrings.length != 3) {
+					continue;
+				} else {
+					HashMap<String, String> temp = new HashMap<String, String>();
+					temp.put("contactId", oneContactStrings[0]);
+					temp.put("contactName", oneContactStrings[1]);
+					temp.put("contactNumber", oneContactStrings[2]);
+					
+					allValueMap.add(temp);
+				}
+			}
+		}
+		
+		return allValueMap;
+	} 
+	
+	private void updateContactListView(String value) {
+		mContactDataAdapter = new ContactDataAdapter(getApplicationContext(), getContactListMap(value));
+		
+		mContactListView.setAdapter(mContactDataAdapter);
+		mContactListView.setListViewHeightBasedOnChildren();
 	}
 }

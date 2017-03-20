@@ -193,5 +193,65 @@
         android:layout_toLeftOf="@+id/DeviceAudioType"
         android:gravity="center"
         android:text="@string/device_contact" />
+    
+    
+    <TextView
+        android:id="@+id/contact_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="@string/device_contact"
+        android:textColor="@color/text_color"
+        android:textSize="30sp"/>
+
+    <ScrollView
+        android:id="@+id/contact_scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/contact_title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+            <com.example.searchHost.ContactListView
+				android:id="@+id/contact_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+    </ScrollView>
+    
+	<Button
+        android:id="@+id/contact_button_middle"
+        android:layout_width="1px"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" 
+        android:visibility="invisible"/>
+
+    <Button
+        android:id="@+id/contact_back_button"
+        android:text="@string/device_contact_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/contact_button_middle"
+        android:layout_toLeftOf="@+id/contact_button_middle"
+        android:layout_alignBottom="@+id/contact_button_middle"
+        android:layout_marginRight="40dp"/>
+
+    <Button
+        android:id="@+id/contact_change_button"
+        android:text="@string/device_change"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignTop="@+id/contact_button_middle"
+        android:layout_toRightOf="@+id/contact_button_middle"
+        android:layout_alignBottom="@+id/contact_button_middle"
+        android:layout_marginLeft="40dp"/>
 
 </RelativeLayout>
