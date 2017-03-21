@@ -25,4 +25,11 @@
     <string name="device_change">修改</string>
     <string name="device_quit">退出</string>
     <string name="device_contact_back">返回</string>
+    
+    <string name="device_audio_vaule_is_empty">音频值是空</string>
+    <string name="device_audio_vaule_is_out_of_ranger">音频值超出范围 范围是 0 ~ %d</string>
+    
+    <string name="device_ip_address_wrong">ip地址不正确 请输入255.255.255.255 或 255.0.0.1样式地址</string>
+    <string name="device_time_format_wrong">时间格式不正确</string>
+    <string name="device_no_change">无修改</string>
 </resources>

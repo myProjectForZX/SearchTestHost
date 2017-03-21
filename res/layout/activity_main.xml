@@ -72,12 +72,14 @@
         android:id="@+id/DeviceTimeValue" 
         android:layout_width="wrap_content"
         android:layout_height="@dimen/device_widget_height"
-        android:inputType="text"
+        android:inputType="number"
+        android:digits="0123456789-"
         android:ems="20"
         android:layout_alignBottom="@+id/DeviceTime"
         android:layout_alignStart="@+id/DeviceIPValue"
         android:layout_alignEnd="@+id/DeviceIPValue"
-        android:layout_marginTop="33dp"/>
+        android:layout_marginTop="33dp"
+        android:singleLine="true"/>
 
     <TextView
         android:id="@+id/DeviceLanauge"
@@ -145,7 +147,8 @@
         android:layout_alignStart="@+id/DeviceNameString"
         android:layout_toLeftOf="@+id/DeviceIPChangeButton"
         android:ems="15"
-        android:inputType="text" />
+        android:inputType="number"
+        android:digits="0123456789." />
 
     <EditText
         android:id="@+id/DeviceAudioVaule"
@@ -155,8 +158,8 @@
         android:layout_marginStart="20dp"
         android:layout_toRightOf="@+id/DeviceAudioType"
         android:layout_toLeftOf="@+id/DeviceAudioChangeButton"
-        android:ems="10"
-        android:inputType="text" />
+        android:ems="3"
+        android:inputType="number" />
 
     <Spinner
         android:id="@+id/DeviceAudioType"

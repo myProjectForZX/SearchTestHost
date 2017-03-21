@@ -3,10 +3,11 @@ package com.example.searchHost;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -20,7 +21,6 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -66,9 +66,12 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	private ScrollView mContactScrollView = null;
 	
 	private String currentLangauge = null;
+	
 	private String currentAudioType = null;
 	private int    currentAudioValue = 0;
-	private int    maxAudioValue     = 0;
+	private int    currentMaxAudioValue = 0;
+	
+	private ArrayList<AudioTypeBean> mAllAudioValue = null;
 	
 	private String mDeviceIp = null;
 	
@@ -77,14 +80,22 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	
 	private ContactDataAdapter mContactDataAdapter = null;
 	private ContactListView mContactListView = null;
+	List<HashMap<String, String>> allContactMap;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		initView();
+		initData();
 	}
 	
+	private void initData() {
+		// TODO Auto-generated method stub
+		mAllAudioValue = new ArrayList<AudioTypeBean>();
+		allContactMap = new ArrayList<HashMap<String,String>>();
+	}
+
 	private void initView() {
 		bt_search = (Button)findViewById(R.id.bt_search);
 		passwordEdit = (EditText)findViewById(R.id.passwordEdit);
@@ -147,48 +158,96 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			if(mDeviceIp == null)
 				return;
 			
-			boolean isDefault = false;
+			boolean isNoNeedToSendCommand = false;
 			byte[] dataType = new byte[1];
 			String[] dataContent = new String[1];
 			switch (v.getId()) {
 			case R.id.DeviceIPChangeButton:
-				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
-				dataContent[0] = mDeviceIpEditText.getText().toString();
+				if(checkIpValue()) {
+					dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
+					dataContent[0] = mDeviceIpEditText.getText().toString();
+				} else {
+					isNoNeedToSendCommand = true;
+				}
 				break;
+				
 			case R.id.DeviceTimeChangeButton:
-				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
-				dataContent[0] = mDeviceTimeEditText.getText().toString();
+				if(checkTimeValue()) {
+					dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_TIME;
+					dataContent[0] = mDeviceTimeEditText.getText().toString();
+				} else {
+					isNoNeedToSendCommand = true;
+				}
 				break;
+				
 			case R.id.DeviceLangButton:
-				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
+				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_LANG;
 				dataContent[0] = currentLangauge;
 				break;
+				
 			case R.id.DeviceAudioChangeButton:
-				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_ETIP;
-				dataContent[0] = currentAudioType + ":" + mDeviceAudioEditText.getText().toString();
+				if(checkAudioVaule()) {
+					dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_AUDI;
+					dataContent[0] = currentAudioType + ":" + mDeviceAudioEditText.getText().toString();
+				} else {
+					isNoNeedToSendCommand = true;
+				}
+				
 				break;
+				
 			case R.id.DeviceContact:
 				updateUiToConnectStat(UI_CONTACT_SHOW);
-				isDefault = true;
+				isNoNeedToSendCommand = true;
 				break;
+				
 			case R.id.button_quit:
 				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_QUIT;
 				dataContent[0] = "quit";
 				break;
+				
 			case R.id.contact_back_button:
 				updateUiToConnectStat(UI_SEARCH_SUCC);
-				isDefault = true;
+				isNoNeedToSendCommand = true;
 				break;
+				
 			case R.id.contact_change_button:
 				dataType[0] = DataPackHost.PACKET_DATA_TYPE_DEVICE_CONT;
+				StringBuffer sb = new StringBuffer();
+				if(mContactDataAdapter != null) {
+					List<HashMap<String, String>> contact = mContactDataAdapter.getChangeNumber();
+					
+					if(contact != null) {
+						for(int i = 0; i < contact.size(); ++i) {
+							String contacId = (String)contact.get(i).get("contactId");
+							String contactName = (String)contact.get(i).get("contactName");
+							String contactPhone  = (String)contact.get(i).get("contactNumber");
+							
+							sb.append(contacId);
+							sb.append(":");
+							sb.append(contactName);
+							sb.append(":");
+							sb.append(contactPhone);
+							sb.append("+");
+						}
+						
+						if(sb.length() > 1)
+							sb.deleteCharAt(sb.length() - 1);
+					}
+				}
 				
+				if(sb.length() > 1) {
+					dataContent[0] = sb.toString();
+				} else {
+					isNoNeedToSendCommand = true;
+					Toast.makeText(getApplicationContext(), getResources().getString(R.string.device_no_change), Toast.LENGTH_SHORT).show();
+				}
 				break;
 			default:
-				isDefault = true;
+				isNoNeedToSendCommand = true;
 				break;
 			}
 			
-			if(!isDefault) {
+			if(!isNoNeedToSendCommand) {
 				new HostSendDataThread(mHandler, mDeviceIp, dataType, dataContent)
 							.start();
 			}
@@ -320,6 +379,76 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		
 	}
 	
+	private boolean checkAudioVaule() {
+		boolean result = false;
+		if(mDeviceAudioEditText.getText().length() == 0) {
+			Toast.makeText(getApplicationContext(), getResources().getString(R.string.device_audio_vaule_is_empty), Toast.LENGTH_SHORT).show();
+			return result;
+		}
+		
+		int audioValue = Integer.valueOf(mDeviceAudioEditText.getText().toString());
+		
+		int maxValue = -1;
+		int i = 0;
+		
+		for(i = 0; i < mAllAudioValue.size(); ++i) {
+			if(currentAudioType != null) {
+				if(currentAudioType.equals(mAllAudioValue.get(i).getAudioType())) {
+					maxValue = mAllAudioValue.get(i).getAudioMaxValue();
+					break;
+				}
+			}
+		}
+		
+		if(audioValue <= maxValue && audioValue >= 0) {
+			result = true;
+			if(mAllAudioValue != null) {
+				mAllAudioValue.get(i).setAudioVaule(audioValue);
+			}
+		} else {
+			Toast.makeText(getApplicationContext(), getResources().getString(R.string.device_audio_vaule_is_out_of_ranger, maxValue), Toast.LENGTH_SHORT).show();
+		}
+		
+		return result;
+	}
+	
+	private boolean checkIpValue() {
+		String ipValue = mDeviceIpEditText.getText().toString();
+
+		String ip = "^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\."
+				+ "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
+				+ "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
+				+ "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)$";
+		Pattern pattern = Pattern.compile(ip);
+		Matcher matcher = pattern.matcher(ipValue);
+		
+		boolean result = matcher.matches();
+		
+		if(!result) {
+			Toast.makeText(getApplicationContext(), getResources().getString(R.string.device_ip_address_wrong), Toast.LENGTH_SHORT).show();
+		}
+		
+		return result;
+	}
+	
+	//2014-12-01-03-02-05
+	private boolean checkTimeValue() {
+		String timeValue = mDeviceTimeEditText.getText().toString();
+
+		String time = "^((\\d{2}(([02468][048])|([13579][26]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])))))|(\\d{2}(([02468][1235679])|([13579][01345789]))[\\-\\/\\s]?((((0?[13578])|(1[02]))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(3[01])))|(((0?[469])|(11))[\\-\\/\\s]?((0?[1-9])|([1-2][0-9])|(30)))|(0?2[\\-\\/\\s]?((0?[1-9])|(1[0-9])|(2[0-8]))))))";
+			   time += "\\-([0-1]\\d{1}|2[0-3])\\-([0-5]\\d{1})\\-([0-5]\\d{1})";
+		Pattern pattern = Pattern.compile(time);
+		Matcher matcher = pattern.matcher(timeValue);
+		
+		boolean result = matcher.matches();
+		
+		if(!result) {
+			Toast.makeText(getApplicationContext(), getResources().getString(R.string.device_time_format_wrong), Toast.LENGTH_SHORT).show();
+		}
+		
+		return result;
+	}
+	
 	private void updateUiToConnectStat(int uiType) {
 		if(uiType == UI_SEARCH_START || uiType == UI_SEARCH_FAIL) {
 			showSearchUI(true, true);
@@ -447,13 +576,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		ArrayAdapter<String> adapter = null;
 		
 		if(audioArrayTemp != null) {
-			String[] currentAudioArray = audioArrayTemp[0].split(":");
-			if(currentAudioArray != null && currentAudioArray.length == 3) {
-				currentAudioType = currentAudioArray[0];
-				currentAudioValue = Integer.valueOf(currentAudioArray[1]);
-				maxAudioValue     = Integer.valueOf(currentAudioArray[2]);
-			}
-			
 			if(audioArrayTemp.length >= 2) {
 				mAudioItems = new String[audioArrayTemp.length];
 					
@@ -461,6 +583,19 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 					String[] tempAudio = audioArrayTemp[i].split(":");
 					if(tempAudio != null && tempAudio.length == 3) {
 						mAudioItems[i] = tempAudio[0];
+						
+						//i == 0 is current audio value
+						if(i == 0) {
+							currentAudioType = tempAudio[0];
+							currentAudioValue = Integer.valueOf(tempAudio[1]);
+							currentMaxAudioValue = Integer.valueOf(tempAudio[2]);
+						}
+						
+						AudioTypeBean atb = new AudioTypeBean(tempAudio[0], Integer.valueOf(tempAudio[1]), Integer.valueOf(tempAudio[2]));
+						
+						if(mAllAudioValue != null) {
+							mAllAudioValue.add(atb);
+						}
 					}
 				}
 			}
@@ -477,6 +612,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 								View arg1, int pos, long arg3) {
 							// TODO Auto-generated method stub
 							currentAudioType = mAudioItems[pos];
+							
+							if(mAllAudioValue != null) {
+								for(int i = 0; i < mAllAudioValue.size(); ++i) {
+									if(currentAudioType.equals(mAllAudioValue.get(i).getAudioType())) {
+										mDeviceAudioEditText.setText(String.valueOf(mAllAudioValue.get(i).getAudioVaule()));
+									}
+								}
+							}
 						}
 
 						@Override
@@ -487,12 +630,12 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 					});
 				}
 			}
+			
+			mDeviceAudioEditText.setText(String.valueOf(currentAudioValue));
 		}
 	}
 	
 	private List<HashMap<String, String>> getContactListMap(String value){
-		List<HashMap<String, String>> allValueMap = new ArrayList<HashMap<String, String>>();
-		
 		if(value == null || value.isEmpty())
 			return null;
 		
@@ -509,12 +652,12 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 					temp.put("contactName", oneContactStrings[1]);
 					temp.put("contactNumber", oneContactStrings[2]);
 					
-					allValueMap.add(temp);
+					allContactMap.add(temp);
 				}
 			}
 		}
 		
-		return allValueMap;
+		return allContactMap;
 	} 
 	
 	private void updateContactListView(String value) {
